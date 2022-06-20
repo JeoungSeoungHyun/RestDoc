@@ -1,0 +1,58 @@
+plugins {
+	id 'org.springframework.boot' version '2.6.8'
+	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'java'
+	id "org.asciidoctor.jvm.convert" version "3.3.2"
+}
+
+group = 'site.metacoding'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+ext {
+    snippetsDir = file('build/generated-snippets')
+}
+
+
+test {
+    outputs.dir snippetsDir
+    useJUnitPlatform()
+}
+
+// 기존에 존재하는 docs를 삭제해준다.
+asciidoctor.doFirst {
+    delete file('src/main/resources/static/docs')
+}
+
+asciidoctor {
+    dependsOn test
+     inputs.dir snippetsDir
+}
+
+bootJar {
+    dependsOn asciidoctor
+    copy {
+      // src/docs/asciidoc == from 경로
+        from "${asciidoctor.outputDir}"
+        into 'src/main/resources/static/docs'    // /static/docs로 복사!
+    }
+}
